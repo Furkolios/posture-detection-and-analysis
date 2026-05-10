@@ -1,0 +1,24 @@
+# Build outputs
+build/
+
+# TI-licensed vendor files (each developer copies from their own SDK)
+vendor/startup_msp432p401r_gcc.c
+vendor/system_msp432p401r.c
+vendor/msp432p401r.lds
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Editor / IDE state
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS clutter
+.DS_Store
+Thumbs.db
