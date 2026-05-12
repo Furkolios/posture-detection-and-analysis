@@ -16,40 +16,40 @@ just the signal names — that way nobody has to look up the silkscreen.
 
 ## MSP432 pin assignment
 
-| Function | MSP432 pin | LaunchPad header | Module |
-|---|---|---|---|
-| I²C SDA | P6.4 | J3.10 | EUSCI_B1 |
-| I²C SCL | P6.5 | J3.9  | EUSCI_B1 |
-| UART TX (to HM-10 RX) | P3.3 | J4.34 | EUSCI_A2 |
-| UART RX (from HM-10 TX) | P3.2 | J4.33 | EUSCI_A2 |
-| Buzzer | P2.4 | J4.31 | GPIO |
-| 3.3V supply | — | J3.1 | — |
-| GND | — | J3.20, J6.20 | — |
-
+| Function                | MSP432 pin | LaunchPad header | Module   |
+|-------------------------|------------|------------------|----------|
+| I²C SDA                 | P6.4       | J3.10            | EUSCI_B1 |
+| I²C SCL                 | P6.5       | J3.9             | EUSCI_B1 |
+| UART TX (to HM-10 RX)   | P3.3       | J4.34            | EUSCI_A2 |
+| UART RX (from HM-10 TX) | P3.2       | J4.33            | EUSCI_A2 |
+| Buzzer                  | P2.4       | J4.31            | GPIO     |
+| 3.3V supply             | —          | J3.1             | —        |
+| GND                     | —          | J3.20, J6.20     | —        |
+ 
 If you change any of these, update the matching `#define`s in
 `src/hal_*_msp432.c` AND the README_teammates.md (which doesn't list
 pins but does mention "9600 baud").
 
 ## Wire-by-wire connection table
 
-| From | Pin | To | Pin | Notes |
-|---|---|---|---|---|
-| LaunchPad J3.1 | 3.3V | I²C bus | VCC rail | Powers both IMUs and HM-10 |
-| LaunchPad J6.20 | GND | I²C bus | GND rail | Common ground for everything |
-| LaunchPad J3.10 | P6.4 / SDA | Both IMUs | SDA pin | Shared I²C bus |
-| LaunchPad J3.9 | P6.5 / SCL | Both IMUs | SCL pin | Shared I²C bus |
-| 3.3V rail | (any) | 4.7 kΩ resistor | one end | I²C SDA pull-up (skip if breakout has it) |
-| 4.7 kΩ resistor | other end | SDA line | (any point) | |
-| 3.3V rail | (any) | 4.7 kΩ resistor | one end | I²C SCL pull-up (skip if breakout has it) |
-| 4.7 kΩ resistor | other end | SCL line | (any point) | |
-| Lower IMU | AD0 | GND rail | — | Sets address to 0x68 |
-| Upper IMU | AD0 | 3.3V rail | — | Sets address to 0x69 |
-| LaunchPad J4.34 | P3.3 (TX) | HM-10 | RX pin | UART data out |
-| LaunchPad J4.33 | P3.2 (RX) | HM-10 | TX pin | UART data in (unused right now, wired for AT cmds) |
-| 3.3V rail | (any) | HM-10 | VCC | |
-| GND rail | (any) | HM-10 | GND | |
-| LaunchPad J4.31 | P2.4 | Buzzer | + terminal | Active piezo |
-| GND rail | (any) | Buzzer | − terminal | |
+| From            | Pin        | To              | Pin         | Notes                                              |
+|-----------------|------------|-----------------|-------------|----------------------------------------------------|
+| LaunchPad J3.1  | 3.3V       | I²C bus         | VCC rail    | Powers both IMUs and HM-10                         |
+| LaunchPad J6.20 | GND        | I²C bus         | GND rail    | Common ground for everything                       |
+| LaunchPad J3.10 | P6.4 / SDA | Both IMUs       | SDA pin     | Shared I²C bus                                     |
+| LaunchPad J3.9  | P6.5 / SCL | Both IMUs       | SCL pin     | Shared I²C bus                                     |
+| 3.3V rail       | (any)      | 4.7 kΩ resistor | one end     | I²C SDA pull-up (skip if breakout has it)          |
+| 4.7 kΩ resistor | other end  | SDA line        | (any point) |                                                    |
+| 3.3V rail       | (any)      | 4.7 kΩ resistor | one end     | I²C SCL pull-up (skip if breakout has it)          |
+| 4.7 kΩ resistor | other end  | SCL line        | (any point) |                                                    |
+| Lower IMU       | AD0        | GND rail        | —           | Sets address to 0x68                               |
+| Upper IMU       | AD0        | 3.3V rail       | —           | Sets address to 0x69                               |
+| LaunchPad J4.34 | P3.3 (TX)  | HM-10           | RX pin      | UART data out                                      |
+| LaunchPad J4.33 | P3.2 (RX)  | HM-10           | TX pin      | UART data in (unused right now, wired for AT cmds) |
+| 3.3V rail       | (any)      | HM-10           | VCC         |                                                    |
+| GND rail        | (any)      | HM-10           | GND         |                                                    |
+| LaunchPad J4.31 | P2.4       | Buzzer          | + terminal  | Active piezo                                       |
+| GND rail        | (any)      | Buzzer          | − terminal  |                                                    |
 
 ## Cable length notes
 
