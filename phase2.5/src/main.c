@@ -7,6 +7,7 @@
 #include "classifier.h"
 #include "alert.h"
 #include "telemetry.h"
+#include "hal_buzzer.h"
 #include "hal_time.h"
 
 /* Main loop period in milliseconds. 50 ms = 20 Hz. */
@@ -56,16 +57,17 @@ static void run_calibration(void) {
     for (uint32_t i = 0u; i < CALIBRATION_TICKS; ++i) {
         ImuRaw lower;
         ImuRaw upper;
+        float pitch = 0.0f;
+        float roll  = 0.0f;
         if (imu_source_read(&lower, &upper)) {
-            float pitch = fusion_filter_update(&lower, &upper, MAIN_LOOP_DT_SEC);
-            float roll  = 0.0f;
+            pitch = fusion_filter_update(&lower, &upper, MAIN_LOOP_DT_SEC);
             fusion_filter_get_angles(&pitch, &roll);
-#ifdef USE_TELEMETRY_V1
-            telemetry_send(pitch, POSTURE_GOOD);
-#else
-            telemetry_send_v2(pitch, roll, POSTURE_GOOD);
-#endif
         }
+#ifdef USE_TELEMETRY_V1
+        telemetry_send(pitch, POSTURE_GOOD);
+#else
+        telemetry_send_v2(pitch, roll, POSTURE_GOOD);
+#endif
         sleep_ms(MAIN_LOOP_PERIOD_MS);
     }
     float pitch_neutral = 0.0f;
@@ -81,13 +83,13 @@ void hal_platform_init(void);
 int main(void) {
     /* --- Init ---------------------------------------------------------- */
     hal_platform_init();
-    /* MPU-6050 requires ~30 ms after VDD power-on before its I2C
-     * interface is ready. Without this delay the first write to
-     * PWR_MGMT_1 NACKs, the chip stays in sleep mode, and all
-     * measurement registers return 0x0000. */
-    sleep_ms(50u);
-    imu_source_init();
     alert_init();
+    /* Startup beep: confirms firmware is running before I2C is touched.
+     * The 200 ms also covers the MPU-6050's 30 ms VDD power-on delay. */
+    buzzer_on();
+    sleep_ms(200u);
+    buzzer_off();
+    imu_source_init();
     telemetry_init();
     run_calibration();
 
@@ -101,27 +103,29 @@ int main(void) {
 
         ImuRaw lower;
         ImuRaw upper;
+        float pitch = 0.0f;
+        float roll  = 0.0f;
+        PostureState state = POSTURE_GOOD;
         if (imu_source_read(&lower, &upper)) {
-            float pitch = fusion_filter_update(&lower, &upper, MAIN_LOOP_DT_SEC);
-            float roll  = 0.0f;
+            pitch = fusion_filter_update(&lower, &upper, MAIN_LOOP_DT_SEC);
             fusion_filter_get_angles(&pitch, &roll);
-            PostureState state = classifier_classify_full(pitch, roll);
+            state = classifier_classify_full(pitch, roll);
             alert_update(state);
-#ifdef USE_TELEMETRY_V1
-            /* Legacy emitter for Phase 1 pytest compatibility. Phase 1
-             * decoders only know GOOD/MILD/FULL, so we collapse the
-             * three Phase 2 additions onto the closest V1 state. */
-            PostureState legacy_state = state;
-            if (legacy_state == POSTURE_LEAN_FORWARD)
-                legacy_state = POSTURE_MILD_SLOUCH;
-            else if (legacy_state == POSTURE_LEAN_BACK ||
-                     legacy_state == POSTURE_LATERAL_TILT)
-                legacy_state = POSTURE_GOOD;
-            telemetry_send(pitch, legacy_state);
-#else
-            telemetry_send_v2(pitch, roll, state);
-#endif
         }
+#ifdef USE_TELEMETRY_V1
+        /* Legacy emitter for Phase 1 pytest compatibility. Phase 1
+         * decoders only know GOOD/MILD/FULL, so we collapse the
+         * three Phase 2 additions onto the closest V1 state. */
+        PostureState legacy_state = state;
+        if (legacy_state == POSTURE_LEAN_FORWARD)
+            legacy_state = POSTURE_MILD_SLOUCH;
+        else if (legacy_state == POSTURE_LEAN_BACK ||
+                 legacy_state == POSTURE_LATERAL_TILT)
+            legacy_state = POSTURE_GOOD;
+        telemetry_send(pitch, legacy_state);
+#else
+        telemetry_send_v2(pitch, roll, state);
+#endif
 
         sleep_ms(MAIN_LOOP_PERIOD_MS);
 

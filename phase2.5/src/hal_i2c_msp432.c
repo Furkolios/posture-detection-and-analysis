@@ -163,9 +163,12 @@ bool hal_i2c_write_bytes(uint8_t slave_addr_7bit,
     I2C_masterSendMultiByteFinish(I2C_BASE, buf[n - 1u]);
 
     /* Wait for STOP to fully clock out before returning, so the bus
-     * is idle when the next transaction begins. */
-    while (I2C_masterIsStopSent(I2C_BASE) == EUSCI_B_I2C_SENDING_STOP) {
-        /* spin */
+     * is idle when the next transaction begins. Bounded to prevent a
+     * hang if the bus is stuck (e.g. marginal pull-up or loose wire). */
+    for (uint32_t i = 0u; i < I2C_BUSY_TIMEOUT_ITERS; ++i) {
+        if (I2C_masterIsStopSent(I2C_BASE) != EUSCI_B_I2C_SENDING_STOP) {
+            break;
+        }
     }
     return true;
 }
