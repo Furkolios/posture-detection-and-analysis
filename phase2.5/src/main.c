@@ -81,6 +81,11 @@ void hal_platform_init(void);
 int main(void) {
     /* --- Init ---------------------------------------------------------- */
     hal_platform_init();
+    /* MPU-6050 requires ~30 ms after VDD power-on before its I2C
+     * interface is ready. Without this delay the first write to
+     * PWR_MGMT_1 NACKs, the chip stays in sleep mode, and all
+     * measurement registers return 0x0000. */
+    sleep_ms(50u);
     imu_source_init();
     alert_init();
     telemetry_init();
