@@ -10,6 +10,19 @@
 #include "hal_buzzer.h"
 #include "hal_time.h"
 
+#ifdef TARGET_MSP432
+#include <ti/devices/msp432p4xx/driverlib/driverlib.h>
+static void debug_print(const char *s) {
+    while (*s) {
+        while (!(UART_getInterruptStatus(EUSCI_A0_BASE,
+                    EUSCI_A_UART_TRANSMIT_INTERRUPT_FLAG)));
+        UART_transmitData(EUSCI_A0_BASE, (uint8_t)*s++);
+    }
+}
+#else
+#  define debug_print(s) ((void)0)
+#endif
+
 /* Main loop period in milliseconds. 50 ms = 20 Hz. */
 #define MAIN_LOOP_PERIOD_MS  50u
 #define MAIN_LOOP_DT_SEC     (MAIN_LOOP_PERIOD_MS / 1000.0f)
@@ -83,15 +96,19 @@ void hal_platform_init(void);
 int main(void) {
     /* --- Init ---------------------------------------------------------- */
     hal_platform_init();
+    debug_print("1:platform ok\r\n");
     alert_init();
-    /* Startup beep: confirms firmware is running before I2C is touched.
-     * The 200 ms also covers the MPU-6050's 30 ms VDD power-on delay. */
+    debug_print("2:alert ok\r\n");
     buzzer_on();
     sleep_ms(200u);
     buzzer_off();
+    debug_print("3:beep ok\r\n");
     imu_source_init();
+    debug_print("4:imu init ok\r\n");
     telemetry_init();
+    debug_print("5:telemetry ok\r\n");
     run_calibration();
+    debug_print("6:calibration ok\r\n");
 
     /* --- Loop ---------------------------------------------------------- */
     const volatile uint32_t max_iter = PHASE2_MAIN_ITERATIONS;

@@ -44,4 +44,24 @@ void hal_platform_init(void) {
 
     /* 4. Global interrupts (SysTick handler depends on this). */
     Interrupt_enableMaster();
+
+    /* 5. Back-channel UART on EUSCI_A0 (P1.2=RX, P1.3=TX) at 9600 baud.
+     *    Appears as the "XDS110 Application/User UART" COM port on the PC.
+     *    Divisors for SMCLK=12 MHz, 9600 baud, oversampling: UCBRx=78,
+     *    UCBRFx=2, UCBRSx=0x00. Remove this block once debugging is done. */
+    GPIO_setAsPeripheralModuleFunctionInputPin(
+        GPIO_PORT_P1, GPIO_PIN2 | GPIO_PIN3,
+        GPIO_PRIMARY_MODULE_FUNCTION);
+    static const eUSCI_UART_ConfigV1 dbg_cfg = {
+        EUSCI_A_UART_CLOCKSOURCE_SMCLK,
+        78, 2, 0x00,
+        EUSCI_A_UART_NO_PARITY,
+        EUSCI_A_UART_LSB_FIRST,
+        EUSCI_A_UART_ONE_STOP_BIT,
+        EUSCI_A_UART_MODE,
+        EUSCI_A_UART_OVERSAMPLING_BAUDRATE_GENERATION,
+        EUSCI_A_UART_8_BIT_LEN
+    };
+    UART_initModule(EUSCI_A0_BASE, &dbg_cfg);
+    UART_enableModule(EUSCI_A0_BASE);
 }
